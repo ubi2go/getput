@@ -38,7 +38,7 @@ from optparse import OptionParser, OptionGroup
 
 
 def error(text):
-    print text
+    print(text)
     sys.exit()
 
 
@@ -121,7 +121,7 @@ def config_parse(file, suite=None):
 
     suite = options.suite
     if debug & 9:
-        print 'Loading config from %s' % file
+        print('Loading config from %s' % file)
 
     try:
         conf = open(file, 'r')
@@ -166,10 +166,10 @@ def config_parse(file, suite=None):
                 error("cannot insert values for '@%s', because not found"
                       % insert_from)
             if debug & 8:
-                print '  inserting values from', insert_from
+                print('  inserting values from', insert_from)
             for var in vars[insert_from]:
                 if debug & 8:
-                    print "    %s=%s" % (var, vars[insert_from][var])
+                    print("    %s=%s" % (var, vars[insert_from][var]))
                 vars[stanza][var] = vars[insert_from][var]
             continue
 
@@ -199,13 +199,13 @@ def config_parse(file, suite=None):
 
         vars[stanza][var] = value
         if debug & 8 and stanza == suite:
-            print "    %s=%s" % (var, val)
+            print("    %s=%s" % (var, val))
 
 
 def config_check():
 
     if debug & 1:
-        print 'Checking config for', options.suite
+        print('Checking config for', options.suite)
 
     suite = options.suite
 
@@ -231,12 +231,12 @@ def config_check():
                 # this used to only look at nodefill, maxnodes and runtime
                 # and I can't remember why, but I think we need to look at
                 # any of these that should be a positive number
-		if re.match('nodefill|maxnodes|runtime', var):
+                if re.match('nodefill|maxnodes|runtime', var):
                     temp = int(vars[suite][var])
-		    if temp == 0:
-			error("'%s' cannot be 0" % var)
-		elif var == 'procs':
-		    for proc in vars[suite][var].split(','):
+                    if temp == 0:
+                        error("'%s' cannot be 0" % var)
+                elif var == 'procs':
+                    for proc in vars[suite][var].split(','):
                         temp = int(proc)
                         if temp == 0:
                             error("'%s' cannot be 0" % var)
@@ -388,10 +388,10 @@ def config_check():
             node = node[:-1]
             command = 'ping -c1 %s 2>/dev/null 1>&2' % node
             if debug & 16:
-                print command
+                print(command)
             if (os.system(command)):
-                print "  Could not ping node %s in %s" \
-                    % (node, vars[suite]['nodes'])
+                print("  Could not ping node %s in %s" \
+                    % (node, vars[suite]['nodes']))
                 ping_fail += 1
 
             # doing as part of ping loop will double overall test time and
@@ -403,7 +403,7 @@ def config_check():
             command += '%s date ' % node
             command += '+%s 2>/dev/null'
             if debug & 16:
-                print command
+                print(command)
             utc_time = int(subprocess.check_output(command, shell=True))
 
             # calculate overall drift
@@ -414,8 +414,8 @@ def config_check():
 
             our_drift = abs(utc_time - time.time())
             if our_drift > drift:
-                print "*** WARNING: clock on %s and ours have drifted by %d seconds" % \
-                    (node, our_drift)
+                print("*** WARNING: clock on %s and ours have drifted by %d seconds" % \
+                    (node, our_drift))
                 drift_error = True
 
         # estimate the overall clock drift between the min/max BUT attempt to
@@ -423,8 +423,8 @@ def config_check():
         remote_drift = abs(max_time - min_time - (time.time() - time0))
 
         if remote_drift > drift:
-            print 'looks like one or more remote clocks may have drifted ' + \
-                '%d seconds with each other' % remote_drift
+            print('looks like one or more remote clocks may have drifted ' + \
+                '%d seconds with each other' % remote_drift)
             drift_error = True
 
         if drift_error:
@@ -444,12 +444,12 @@ def command_exec(command):
     command += " 2>%s" % errlog
     try:
         if debug & 2:
-            print "Command: %s" % command
+            print("Command: %s" % command)
         results = subprocess.check_output(command, shell=True)
-        print results,
+        print(results, end=' ')
         os.remove(errlog)
     except:
-        print "Command Failed: %s  See %s for details" % (command, errlog)
+        print("Command Failed: %s  See %s for details" % (command, errlog))
 
 
 def findbin(name):
@@ -507,9 +507,9 @@ if __name__ == "__main__":
     if options.list:
         for test in sorted(vars):
             if 'comment' in vars[test]:
-                print "%-20s  %s" % (test, vars[test]['comment'])
+                print("%-20s  %s" % (test, vars[test]['comment']))
             else:
-                print test
+                print(test)
 
         sys.exit()
 
@@ -528,7 +528,7 @@ if __name__ == "__main__":
             else:
                 mod = ''
             pname = '%s%s' % (param, mod)
-            print "%-12s = %s" % (pname, vars[suite][param])
+            print("%-12s = %s" % (pname, vars[suite][param]))
 
     maxnodes = int(vars[suite]['maxnodes'])
 
@@ -562,7 +562,7 @@ if __name__ == "__main__":
             error("couldn't open '%s' for writing" % outname)
 
         # only if not a dry run, and for now if not --logname
-        print "Writing test results to", outname
+        print("Writing test results to", outname)
         if not debug & 256:
             ofile.write('#%-12s: %s\n' % ('gpsuite', version))
             ofile.write('#%-12s: %s\n' % ('hostname', hostname))
@@ -588,7 +588,7 @@ if __name__ == "__main__":
             continue
         if not re.match('export', line):
             if debug & 1:
-                print "  Ignoring line in creds file not starting with 'export'"
+                print("  Ignoring line in creds file not starting with 'export'")
             continue
 
         line = line[:-1]
@@ -607,8 +607,8 @@ if __name__ == "__main__":
         repeat = 99999
         endsecs = int(time.time()) + float(vars[suite]['maxhours']) * 3600
         if debug & 1:
-            print 'Terminate testing after %s hour(s)' \
-                % vars[suite]['maxhours']
+            print('Terminate testing after %s hour(s)' \
+                % vars[suite]['maxhours'])
 
     if 'suiteinit' in vars[suite]:
         command = '%s -s%s' % (vars[suite]['suiteinit'], suite)
@@ -684,11 +684,11 @@ if __name__ == "__main__":
                 if not debug & 256:
                     command += ' | tee -a %s' % outname
                 if options.dryrun:
-                    print '\n%s\n' % command
+                    print('\n%s\n' % command)
                     sys.exit()
 
                 if debug & 6:
-                    print "Command:", command
+                    print("Command:", command)
 
                 results = ''
                 if not debug & 4:
@@ -700,10 +700,10 @@ if __name__ == "__main__":
                             command, shell=True, env=my_env,
                              stderr=subprocess.STDOUT)
                     except subprocess.CalledProcessError as err:
-                        print "gpsuite error executing %s" % command
+                        print("gpsuite error executing %s" % command)
 
                 if debug & 256:
-                    print results,
+                    print(results, end=' ')
 
                 # post test processing?
                 if 'posttest' in vars[suite]:
@@ -722,14 +722,14 @@ if __name__ == "__main__":
                             if 'postargs' in vars[suite]:
                                 command += ' %s' % vars[suite]['postargs']
                             if debug & 2:
-                                print "Command:", command
+                                print("Command:", command)
                             results = subprocess.check_output(\
                                 command, shell=True,
                                 stderr=subprocess.STDOUT)
                             if not debug & 256:
                                 ofile.write(results)
                             else:
-                                print results,
+                                print(results, end=' ')
 
                 nohead = '--nohead'
 
@@ -737,7 +737,7 @@ if __name__ == "__main__":
                 if 'maxhours' in vars[suite] and (time.time() > endsecs):
                     message = "runtime of %s hours exceeded.  " + \
                         "exiting..." % vars[suite]['maxhours']
-                    print message
+                    print(message)
                     ofile.write(message)
                     ofile.close()
                     sys.exit()
