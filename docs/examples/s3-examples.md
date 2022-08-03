@@ -1,5 +1,5 @@
 
-export variables
+export environment variables
 
 ```console
 export RGW_ACCESS_ID=access id
