@@ -38,7 +38,7 @@ import os
 import re
 import struct
 import random
-import request
+import requests
 import signal
 import socket
 import string
@@ -46,7 +46,7 @@ import time
 import inspect
 import io
 import requests
-import md5
+import md5hash
 import hashlib
 from random import randint
 from optparse import OptionParser, OptionGroup
@@ -105,8 +105,8 @@ def build_object():
     if not options.objopts or not re.search('c', options.objopts):
         while (count < (32 * 1024)):
             num = int(random.random() * 255)
-            temp = ''.join([temp, struct.pack('B', num)])
-            count = count + 1
+            temp = ''.join([temp, str(struct.pack('B', num))])
+            count += 1
     else:
         temp = ' ' * 32 * 1024
 
@@ -118,8 +118,9 @@ def build_object():
     # trim it down if necessary
     fixed_object = fixed_object[:osize]
 
-    m = md5.new()
-    m.update(fixed_object)
+    # m = md5.new()
+    m = hashlib.md5()
+    m.update(str.encode(fixed_object))
     md5_digest = m.hexdigest()
     if debug & 1024:
         print("Obj MD5:", md5_digest)
@@ -1801,7 +1802,7 @@ def median_calc(list):
     """
 
     list.sort()
-    median = list[len(list)/2] if len(list) else 0
+    median = list[int(len(list)/2)] if len(list) else 0
     return(median)
 
 
