@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/python3 -u
 
 # Copyright 2014-2016 Hewlett-Packard Development Company, L.P.
 # Use of this script is subject to HP Terms of Use at
@@ -55,7 +55,7 @@ def logexec(text):
 
 
 def error(text):
-    print text
+    print(text)
     sys.exit()
 
 
@@ -182,7 +182,7 @@ def main(argv):
     try:
         (options, args) = parser.parse_args()
     except:
-        print 'invalid command'
+        print('invalid command')
         sys.exit()
 
     if options.help:
@@ -190,7 +190,7 @@ def main(argv):
         sys.exit()
 
     if options.version:
-        print 'gpmulti V%s\n\n%s' % (version, copyright)
+        print('gpmulti V%s\n\n%s' % (version, copyright))
         sys.exit()
 
     if options.debug:
@@ -291,7 +291,7 @@ def main(argv):
             error('--runtime must be an integer')
 
     if args:
-        print "Extra command argument(s):", args
+        print("Extra command argument(s):", args)
         sys.exit()
 
     if not options.runtime and not options.numobjs:
@@ -438,23 +438,23 @@ def execute(queue, command):
         results = subprocess.check_output(command, shell=True)
         os.remove(errlog)
     except subprocess.CalledProcessError as err:
-        print "getput error, see %s for details" % errlog
+        print("getput error, see %s for details" % errlog)
         queue.put("unexpected getput error at %s, see %s for details" % (ptime(time.time()), errlog))
         return
 
     # VERY unexepected!!!
     try:
         if results == '':
-            print "NO RESULTS!!!"
+            print("NO RESULTS!!!")
             queue.put("error: no results")
             return
     except UnboundLocalError:
-        print "NO RESULTS exception!!!"
+        print("NO RESULTS exception!!!")
         queue.put("error: no results exception")
         return
 
     if debug & 32:
-        print "Results", results
+        print("Results", results)
 
     trimmed = ''
     for line in results.split('\n'):
@@ -463,7 +463,7 @@ def execute(queue, command):
                      line, re.IGNORECASE):
             trimmed += "%s\n" % line
         elif debug & 16:
-            print line
+            print(line)
 
     queue.put(trimmed)
 
@@ -490,7 +490,7 @@ def print_header():
     if options.csv:
         hdr = re.sub('\s+', ',', hdr)
         hdr = re.sub(',$', '', hdr)
-    print hdr
+    print(hdr)
 
 
 def print_results(queue, putcount):
@@ -517,23 +517,23 @@ def print_results(queue, putcount):
                 continue
 
             if debug & 4:
-                print '>>>Line:', line
+                print('>>>Line:', line)
 
             # this will need to evolve, but for now treat any error messages
             # EXCEPT 'API Error' as serious and don't expect any output
             if re.search('error|warning|debug', results, re.IGNORECASE):
                 if re.search('API|MD5', line):
-                    print line
+                    print(line)
                     continue
                 elif re.search('warning|debug', line, re.IGNORECASE):
-                    print line
+                    print(line)
                     warnexit = options.warnexit
                     if re.search('warning', line, re.IGNORECASE) and warnexit:
                         status = -1
                     continue
                 elif re.search('error', line, re.IGNORECASE):
-                    print "*** Remote Execution Error on node %s ***" % node
-                    print results
+                    print("*** Remote Execution Error on node %s ***" % node)
+                    print(results)
                     sys.exit()
 
             fields = line.split()
@@ -556,7 +556,7 @@ def print_results(queue, putcount):
             elif re.match('g\d+', test):
                 test = '2' + test
 
-	    # put tests may include the UCT timestamp which we need to account for
+            # put tests may include the UCT timestamp which we need to account for
             # but gets/dels don't
             utc_shift = 1 if options.utc and re.search('p', test) else 0
 
@@ -604,7 +604,7 @@ def print_results(queue, putcount):
             if float(x) > lmax:
                 totals[test]['lmax'] = float(x)
             if debug & 8:
-                print "min: %s max: %s" % (totals[test]['min'], totals[test]['max'])
+                print("min: %s max: %s" % (totals[test]['min'], totals[test]['max']))
 
             if options.ldist:
                 for i in range(11):
@@ -655,9 +655,9 @@ def print_results(queue, putcount):
             if options.csv:
                 out = re.sub('\s+', ',', out)
                 out = re.sub(',$', '', out)
-            print out
-        except UnboundLocalError, err:
-            print "Error printing output:", err
+            print(out)
+        except UnboundLocalError as err:
+            print("Error printing output:", err)
             utcstamp = int(time.time())
 
     return((status, puts_per_proc, utcstamp))
@@ -676,7 +676,7 @@ def delcont(cname):
     insecure = ' --insecure' if options.insecure else ''
     command = '/bin/bash -c "%s . %s; swift delete %s%s" 2>>%s' % (activate, options.creds, cname, insecure, errlog)
     if debug & 2:
-        print "Command:", command
+        print("Command:", command)
 
     # sometimes this can fail so wait a bit after 1st failure for eventual consistency to kick in
     # so we don't have to wait on every delete
@@ -687,7 +687,7 @@ def delcont(cname):
             os.remove(errlog)
             break
         except subprocess.CalledProcessError as err:
-            print "Swift errors, retrying... see %s for details" % errlog
+            print("Swift errors, retrying... see %s for details" % errlog)
             time.sleep(10)
     logexec('container deleted')
 
@@ -701,7 +701,7 @@ if __name__ == "__main__":
 if debug & 8:
     resname = '/tmp/gpmulti-%d.log' % os.getpid()
     if debug & 1:
-        print "Writing results to: %s" % resname
+        print("Writing results to: %s" % resname)
 
 #    E x e c u t e    R e m o t e    C o m m a n d    o n    E a c h    N o d e
 
@@ -763,12 +763,12 @@ for procs in procset:
                 errlog = '/tmp/gpmulti-pretest-%s-%d.err' % (test, time.time())
                 command = '%s %s 2>%s' % (options.pretest, test, errlog)
                 if debug & 256:
-                    print "Command:", command
+                    print("Command:", command)
                 try:
                     logexec('started pretest: %s' % options.pretest)
                     results = subprocess.check_output(command, shell=True)
                     if results != '':
-                        print results,
+                        print(results, end=' ')
                     logexec('pretest finished')
                     os.remove(errlog)
                 except subprocess.CalledProcessError as err:
@@ -786,12 +786,12 @@ for procs in procset:
                               utc, putcount)
             logexec('Command: %s' % root_command)
 
-	    # we need to activate the venv if specified and since immediately
-	    # followed by getput, we need a leading double quite that will be
-	    # closed later when the full remote command is built
-	    if options.venv:
-		venv = '%s/bin/activate' % options.venv
-	        root_command = '". %s; python /usr/bin/%s' % (venv, root_command)
+            # we need to activate the venv if specified and since immediately
+            # followed by getput, we need a leading double quite that will be
+            # closed later when the full remote command is built
+            if options.venv:
+                venv = '%s/bin/activate' % options.venv
+                root_command = '". %s; python /usr/bin/%s' % (venv, root_command)
 
             jobs = []
             for rank in range(len(remote_nodes)):
@@ -813,16 +813,16 @@ for procs in procset:
                     (ssh_command, remote_nodes[rank], root_command, nobjects)
                 remote_command += " --rank %d" % rank
 
-		# the venv command needs that closing quote we mentioned earlier
-		if options.venv:
-		    remote_command += '"'
+                # the venv command needs that closing quote we mentioned earlier
+                if options.venv:
+                    remote_command += '"'
 
                 if options.exclog:
                     hostname = remote_nodes[rank].split('.')[0].strip()    # strip domain and spaces (if any)
                     remote_command += ' --exclog /tmp/%s-%s.exc' % (options.exclog, hostname)
 
                 if debug & 2:
-                    print "Command:", remote_command
+                    print("Command:", remote_command)
 
                 proc = Process(target=execute, args=(queue, remote_command))
                 jobs.append(proc)
@@ -847,12 +847,12 @@ for procs in procset:
                 ppp = temp_ppp
                 utc = timestamp
             if not status:
-                print "couldn't report results"
-                print "Test: %s  Procs: %s  Size: %s" % (test, procs, osize)
+                print("couldn't report results")
+                print("Test: %s  Procs: %s  Size: %s" % (test, procs, osize))
 
             # mostly stolen from getput, noting we always use --utc
             if test == 'd' and not options.cont_nodelete:
-		t0 = time.time()
+                t0 = time.time()
                 for rank in range(len(remote_nodes)):
                     cname = options.cname
                     if options.utc:
@@ -862,17 +862,17 @@ for procs in procset:
 
                     if options.ctype != 'byproc':
                         if debug & 1:
-                            print 'deleting container(s): %s' % cname
+                            print('deleting container(s): %s' % cname)
                         delcont(cname)
-			if options.ctype == 'shared':
-			    break
+                        if options.ctype == 'shared':
+                            break
                     else:
                         for proc in range(procs):
                             name = '%s-%s-%d' % (cname, rank, proc)
                             if debug & 1:
-                                print 'deleting container(s): %s' % name
+                                print('deleting container(s): %s' % name)
                             delcont(name)
                 delete_time = time.time() - t0
                 if delete_time > threshold_delete:
-                    print "warning: %d seconds to delete all containers" % delete_time
+                    print("warning: %d seconds to delete all containers" % delete_time)
 logexec('exiting cleanly')
