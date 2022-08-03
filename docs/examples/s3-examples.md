@@ -1,5 +1,12 @@
+# prerequisites
 
-export environment variables
+* python3
+* modules: boto, swiftclient, md5hash, requests
+
+# run simple s3 test
+
+
+## export environment variables
 
 ```console
 export RGW_ACCESS_ID=access id
@@ -8,7 +15,7 @@ export RGW_HOST=address of RGW host (e.g. s3.test.org )
 export RGW_PORT=RGW host port (e.g. 443)
 ```
 
-execute a simple test
+## execute a simple test
 
 * connect via s3 protocol (--s3)
 
