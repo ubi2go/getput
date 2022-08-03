@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/python3 -u
 
 # Copyright 2015 Hewlett-Packard Development Company, L.P.
 # Use of this script is subject to HP Terms of Use at
@@ -38,20 +38,20 @@ import os
 import re
 import struct
 import random
-import requests
+import request
 import signal
 import socket
 import string
 import time
 import inspect
-import cStringIO
+import io
 import requests
 import md5
 import hashlib
 from random import randint
 from optparse import OptionParser, OptionGroup
 from multiprocessing import Pool, Value
-from urlparse import urlparse
+from urllib.parse import urlparse
 from swiftclient import Connection
 from swiftclient import ClientException
 from swiftclient import put_object
@@ -84,7 +84,7 @@ def error(text, exit_flag=True):
     Main error reporting, usually exits
     """
 
-    print "Error -- Host: %s getput: %s" % (hostname, text)
+    print("Error -- Host: %s getput: %s" % (hostname, text))
     if exit_flag:
         sys.exit(0)
 
@@ -122,7 +122,7 @@ def build_object():
     m.update(fixed_object)
     md5_digest = m.hexdigest()
     if debug & 1024:
-        print "Obj MD5:", md5_digest
+        print("Obj MD5:", md5_digest)
 
     return(fixed_object)
 
@@ -132,8 +132,8 @@ def md5check(oper, cname, objname, response, md5_digest):
     etag = response['headers']['etag']
     if etag != md5_digest:
         txid = response['headers']['x-trans-id']
-        print "MD5 Error - on %s, TransID: %s for %s/%s, %s != %s" % \
-            (oper, txid, cname, objname, md5_digest, etag)
+        print("MD5 Error - on %s, TransID: %s for %s/%s, %s != %s" % \
+            (oper, txid, cname, objname, md5_digest, etag))
 
 def reset_last(num_procs):
     """
@@ -241,7 +241,7 @@ def parse_creds(creds_file=None):
                         osvars["SWIFTCLIENT_" + search.group(2)] = value
                         osnum += 1
 
-        except IOError, err:
+        except IOError as err:
             error("Couldn't read creds file: " + creds_file)
 
     if not s3:
@@ -285,7 +285,7 @@ def parse_creds(creds_file=None):
         rgw_host = rgwvars['RGW_HOST']
         rgw_port = rgwvars['RGW_PORT']
         if rgw_access_id == ''  or rgw_secret_key == '' or rgw_host == '' or  rgw_port == '':
-	    error("not all 4 s3 access variables specified with --creds or found in environment")
+            error("not all 4 s3 access variables specified with --creds or found in environment")
 
         return((rgw_access_id, rgw_secret_key, rgw_host, rgw_port))
 
@@ -297,7 +297,7 @@ def main(argv):
     global debug, options, procset, sizeset, ldist10, s3
     global username, password, authurl, osvars, errmax
     global latexc_min, latexc_max, latexc_filt, exclog, excopt, \
-		 sha_size, obj_max_proc, put_test, put_test_first
+                 sha_size, obj_max_proc, put_test, put_test_first
 
     ldist10 = 0
     procset = [1]
@@ -425,7 +425,7 @@ def main(argv):
     try:
         (options, args) = parser.parse_args(argv)
     except:
-        print 'invalid command'
+        print('invalid command')
         sys.exit()
 
     if options.help:
@@ -433,14 +433,14 @@ def main(argv):
         sys.exit()
 
     if options.version:
-        print 'getput V%s\n\n%s' % (version, copyright)
+        print('getput V%s\n\n%s' % (version, copyright))
         sys.exit()
 
     s3 = options.s3
     if s3:
         global boto
 
-	import boto
+        import boto
         import boto.s3.connection
 
     # we have to do before printheader() in case we want
@@ -464,7 +464,7 @@ def main(argv):
         if username == '' or password == '' or authurl == '':
             error('specify credentials with --creds OR set ST_* variables')
     else:
-	(rgw_access_id, rgw_secret_key, rgw_host, rgw_port) = parse_creds(options.creds)
+        (rgw_access_id, rgw_secret_key, rgw_host, rgw_port) = parse_creds(options.creds)
 
         # big time hack to make easier to constently call connect()
         username = rgw_access_id
@@ -488,25 +488,25 @@ def main(argv):
     # don't know which one(s). We also need to know if there was a pure PUT
     # test preceding the first mixed test and for that use put_test_first.
     if options.tests:
-	put_test = put_test_first = mixed_test = False
-	for test in options.tests.split(','):
-	    if not re.match('^p\d+g\d+$', test) and not re.match('^[pgd]$', test):
-		error('-test must be combinations of p, g, d and pxgy')	
-	    if test == 'p':
-		put_test = True
-	    if re.match('^p\d+g\d+$', test):
-		mixed_test = True
-		num = options.nobjects
-		if put_test:
-		    put_test_first = True
-    		if not put_test and (not num or not re.search(':', num)):
-        	    error("mixed workload must be preceeded by 'p' test OR include putsperproc with -n")
+        put_test = put_test_first = mixed_test = False
+        for test in options.tests.split(','):
+            if not re.match('^p\d+g\d+$', test) and not re.match('^[pgd]$', test):
+                error('-test must be combinations of p, g, d and pxgy')        
+            if test == 'p':
+                put_test = True
+            if re.match('^p\d+g\d+$', test):
+                mixed_test = True
+                num = options.nobjects
+                if put_test:
+                    put_test_first = True
+                    if not put_test and (not num or not re.search(':', num)):
+                        error("mixed workload must be preceeded by 'p' test OR include putsperproc with -n")
     else:
         error('define test list with -t')
 
     if options.mixopts:
         if options.mixopts != 'm':
-	    error("only valid value for --mixopts is 'm'")
+            error("only valid value for --mixopts is 'm'")
 
     # cname and oname actually defined in init_test()
     if not options.cname:
@@ -522,14 +522,14 @@ def main(argv):
             sha_size = 128 if match.group(1) == ''  else int(match.group(1))
             objopts = re.sub(match.group(0), '', objopts)
         if re.search('m', objopts):
-	    if options.ctype != 'shared':
-		error("--objopts m only makes sense with shared containers")
+            if options.ctype != 'shared':
+                error("--objopts m only makes sense with shared containers")
             match = re.search('m(\d*)', objopts)
             if match.group(1):
-		obj_max_proc = int(match.group(1))
+                obj_max_proc = int(match.group(1))
                 objopts = re.sub(match.group(0), '', objopts)
-	    else:
-		error("--objopt requires max procs")
+            else:
+                error("--objopt requires max procs")
         if objopts != '':
             error("unknown --objopts values: %s" % objopts)
 
@@ -540,7 +540,7 @@ def main(argv):
             error("--objoffset must be an integer")
         if re.search('a', options.objopts):
             error("--objnum and append mode are mutually exclusive")
-	if not re.search('f', options.objopts):
+        if not re.search('f', options.objopts):
             error("--objoffset only makes sense for flat hierarchies")
         try:
             objoffset = int(options.objoffset)
@@ -581,19 +581,19 @@ def main(argv):
         procset = []
         for p in options.procset.split(','):
             try:
-		proc = int(p)
+                proc = int(p)
                 procset.append(proc)
             except ValueError:
                 error('--procs must be an integer')
 
-	    # a real pain but we have to recheck for each value of --procs
-	    for test in options.tests.split(','):
+            # a real pain but we have to recheck for each value of --procs
+            for test in options.tests.split(','):
                 match = re.search('p(\d+)g(\d+)', test)
-		if match:
+                if match:
                     tot = int(match.group(1)) + int(match.group(2))
-		    min = int(proc/tot)
-		    if min * tot != proc:
-		       error("--procs %s not even multiple of %s" % (p, test))
+                    min = int(proc/tot)
+                    if min * tot != proc:
+                       error("--procs %s not even multiple of %s" % (p, test))
 
     if options.runtime:
         if not re.match('\d+$', options.runtime):
@@ -619,7 +619,7 @@ def main(argv):
         error('sync time must be an integer')
 
     if args:
-        print "Extra command argument(s):", args
+        print("Extra command argument(s):", args)
         sys.exit()
 
     if options.latexc:
@@ -713,10 +713,10 @@ def connect(authurl, username, password, osvars, \
         s3_port = int(s3_port)
 
         if debug & 64:
-            print "Connect - Access: %s Secret: %s Host: %s Port: %s" % \
-                (s3_access_key, s3_secret_key, s3_host, s3_port)
+            print("Connect - Access: %s Secret: %s Host: %s Port: %s" % \
+                (s3_access_key, s3_secret_key, s3_host, s3_port))
 
-	try:
+        try:
             connection = boto.connect_s3(
             aws_access_key_id = s3_access_key,
             aws_secret_access_key = s3_secret_key,
@@ -727,12 +727,12 @@ def connect(authurl, username, password, osvars, \
             )
         except Exception as err:
             import traceback
-            print "Connect failure: %s" % err
+            print("Connect failure: %s" % err)
             logexec('connect() exception: %s %s' % (err, traceback.format_exc()))
             return(-1)
 
-	if debug & 64:
-            print "Connected to S3", connection
+        if debug & 64:
+            print("Connected to S3", connection)
         return(connection)
 
     if osvars['OS_AUTH_VERSION'] != '':
@@ -765,7 +765,7 @@ def connect(authurl, username, password, osvars, \
     # these get specified in opts dictionary noting BOTH tenant_id
     # and _name must be defined in dictionary
     os_options = {}
-    for key, value in osvars.iteritems():
+    for key, value in osvars.items():
         if value == "":
             continue
         key = key.replace("OS_", "")
@@ -775,14 +775,14 @@ def connect(authurl, username, password, osvars, \
     if preauthurl != None:
         authurl = ''
     if debug & 64:
-        print "Connect - User: %s Key: %s Options: %s" % \
-            (username, password, os_options)
-        print "Connect - Retries: %d AuthVer: %s AuthURL: %s" % \
-            (retries, auth_version, authurl)
-        print "Connect - Insecure: %s  Cert: %s" % \
-            (insecure, cacert)
-        print "Connect - PreauthURL: %s PreauthToken: %s" % \
-            (preauthurl, preauthtoken)
+        print("Connect - User: %s Key: %s Options: %s" % \
+            (username, password, os_options))
+        print("Connect - Retries: %d AuthVer: %s AuthURL: %s" % \
+            (retries, auth_version, authurl))
+        print("Connect - Insecure: %s  Cert: %s" % \
+            (insecure, cacert))
+        print("Connect - PreauthURL: %s PreauthToken: %s" % \
+            (preauthurl, preauthtoken))
     # get the connection object
     if preauthurl:
         logexec('connect - PreauthURL: %s  PreauthToken: %s' % \
@@ -816,7 +816,7 @@ def connect(authurl, username, password, osvars, \
                              retry_on_ratelimit=options.retry_on_ratelimit)
     except Exception as err:
         import traceback
-        print "Connect failure: %s" % err
+        print("Connect failure: %s" % err)
         logexec('connect() exception: %s %s' % (err, traceback.format_exc()))
         return(-1)
 
@@ -827,7 +827,7 @@ def connect(authurl, username, password, osvars, \
         headers = connection.head_account()
     except Exception as err:
         import traceback
-        print "%s head_account failure: %s" % (ptime(time.time()), err)
+        print("%s head_account failure: %s" % (ptime(time.time()), err))
         logexec('head_account() exception: %s %s' % \
                     (err, traceback.format_exc()))
 
@@ -836,16 +836,16 @@ def connect(authurl, username, password, osvars, \
         # and head_account failed.
         failure = "%s" % err
         if re.search('Not Found|Unable to establish connection', failure):
-            print "    => are proxies or the lack of them the problem? <="
+            print("    => are proxies or the lack of them the problem? <=")
 
         return(-1)
 
     if debug & 4:
-        print "Headers: ", headers
+        print("Headers: ", headers)
     container_count = int(headers.get('x-account-container-count', 0))
 
     if debug & 64:
-        print "connected!", connection
+        print("connected!", connection)
 
     return(connection)
 
@@ -903,10 +903,10 @@ def api_error(type, instance, cname, oname, err, response=None):
         status = err.http_status
         error_string = '%s %s API Error %d' % (time_now, type, status)
         try:
-	    if response:
-	        error_string += ' TransID: %s' % response['headers']['x-trans-id']
+            if response:
+                error_string += ' TransID: %s' % response['headers']['x-trans-id']
         except KeyError:
-	    pass
+            pass
         error_string += ' %s/%s' % (cname, oname)
 
     else:
@@ -914,7 +914,7 @@ def api_error(type, instance, cname, oname, err, response=None):
         error_string = '%s %s API Error %d' % (time_now, type, status)
 
     if not options.quiet:
-        print error_string
+        print(error_string)
     logger(4, 'ApiError: %s ' % status, instance)
 
 
@@ -950,7 +950,7 @@ def reset_url(url, new_address=None):
     """
 
     if s3:
-	return('')
+        return('')
 
     # parse url's scheme, addr, port and path
     new_url = url
@@ -982,7 +982,7 @@ def reset_url(url, new_address=None):
     new_url += path
 
     if url != new_url and debug & 64:
-        print "Reset: %s  To: %s" % (url, new_url)
+        print("Reset: %s  To: %s" % (url, new_url))
 
     return(new_url)
 
@@ -1056,10 +1056,10 @@ def put(connection, instance, donetime, cname, csize, oname, random_flag):
         debug_mask = fields[1]
         debug_width = int(fields[2]) if len(fields)>2 else 1
 
-    fp = cStringIO.StringIO(fixed_object)
+    fp = io.StringIO(fixed_object)
 
     if s3:
-	bucket = connection.get_bucket(cname)
+        bucket = connection.get_bucket(cname)
         bucket_key = boto.s3.key.Key(bucket)
 
     while (puts <= maxputs and time.time() < donetime and errs < errmax):
@@ -1154,8 +1154,8 @@ def put(connection, instance, donetime, cname, csize, oname, random_flag):
         tries = connection.attempts if not s3 else 1 
         retries += tries - 1
         if debug & 32:
-            print "%s %f PUT TransID: %s Latency: %9.6f Tries: %d %s/%s" % \
-                (ptime(t1), t1, transID, latency, tries, cname, objname)
+            print("%s %f PUT TransID: %s Latency: %9.6f Tries: %d %s/%s" % \
+                (ptime(t1), t1, transID, latency, tries, cname, objname))
 
         # note the size if the latecy can vary by object size
         if logmask & 1 or (logmask & 4 and latency > sizelat[sizenum]):
@@ -1169,7 +1169,7 @@ def put(connection, instance, donetime, cname, csize, oname, random_flag):
                 "ObjSize: %4s TransID: %s Tries: %d Obj: %s/%s" % \
                 (start, latency, size, transID, tries, cname, objname)
             if not options.exclog:
-                print "Host: %s -- Warning: %s" % (hostname, text)
+                print("Host: %s -- Warning: %s" % (hostname, text))
                 if options.warnexit:
                     break
             else:
@@ -1264,10 +1264,10 @@ def get(connection, instance, donetime, cname, csize, oname, random_flag):
                 transID = response['headers']['x-trans-id']
 
             except ClientException as err:
-	        if err.http_status == 404 and options.quiton404:
-		    objsize = last_size
-		    gets -= 1
-		    break
+                if err.http_status == 404 and options.quiton404:
+                    objsize = last_size
+                    gets -= 1
+                    break
 
                 errs = errs + 1
                 if err.http_status == 401:
@@ -1299,20 +1299,20 @@ def get(connection, instance, donetime, cname, csize, oname, random_flag):
             # if etag checking is fast enough for swift to do all the time, so can I
             m = md5.new()
             for chunk in body:
-	        #print "CHUNK:", len(chunk)
+                #print "CHUNK:", len(chunk)
                 m.update(chunk)
                 if len(chunk) == 0:
                     break
                 else:
                     objsize += len(chunk)
-	    last_size = objsize
+            last_size = objsize
 
         else:
-	    try:
+            try:
                 transID = ''
                 bucket_key.key = objname
-	        body = bucket_key.get_contents_as_string()
-		objsize = len(body)
+                body = bucket_key.get_contents_as_string()
+                objsize = len(body)
 
             except boto.exception.S3ResponseError as err:
                 if err.status == 404 and options.quiton404:
@@ -1344,8 +1344,8 @@ def get(connection, instance, donetime, cname, csize, oname, random_flag):
         tries = connection.attempts if not s3 else 1
         retries += tries - 1
         if debug & 32:
-            print "%s %f GET TransID: %s Latency: %9.6f Tries: %d %s/%s Read: %d" % \
-                (ptime(t1), t1, transID, latency, tries, cname, objname, objsize)
+            print("%s %f GET TransID: %s Latency: %9.6f Tries: %d %s/%s Read: %d" % \
+                (ptime(t1), t1, transID, latency, tries, cname, objname, objsize))
 
         if logmask & 1 or (logmask & 4 and latency > sizelat[sizenum]):
             logger(2, "%f  %f  %s  %s/%s" % \
@@ -1357,7 +1357,7 @@ def get(connection, instance, donetime, cname, csize, oname, random_flag):
                 "ObjSize: %4s TransID: %s Tries: %d Obj: %s/%s" % \
                 (start, latency, size, transID, tries, cname, objname)
             if not options.exclog:
-                print "Host: %s -- Warning: %s" % (hostname, text)
+                print("Host: %s -- Warning: %s" % (hostname, text))
                 if options.warnexit:
                     break
             else:
@@ -1433,9 +1433,9 @@ def delobj(connection, instance, donetime, cname, csize, oname, random_flag):
                 transID = response['headers']['x-trans-id']
 
             except ClientException as err:
-	        if err.http_status == 404 and options.quiton404:
-		    dels -= 1
-		    break
+                if err.http_status == 404 and options.quiton404:
+                    dels -= 1
+                    break
 
                 errs = errs + 1
                 if err.http_status == 401:
@@ -1464,9 +1464,9 @@ def delobj(connection, instance, donetime, cname, csize, oname, random_flag):
                         (ptime(time.time()), err), instance, 0, 0, 0, 0, 0, 0, \
                         lat_dist, latencies, scpu, 0, 0, 0])
 
-	# as stated in the docs, deleting a non-existing key does NOT throw an error
-	else:
-	    trans_id = ''
+        # as stated in the docs, deleting a non-existing key does NOT throw an error
+        else:
+            trans_id = ''
             bucket.delete_key(objname)
 
         ops = ops + 1
@@ -1479,8 +1479,8 @@ def delobj(connection, instance, donetime, cname, csize, oname, random_flag):
         tries = connection.attempts if not s3 else 1
         retries += tries - 1
         if debug & 32:
-            print "%s %f DEL TransID: %s Latency: %9.6f  Tries: %d %s/%s" % \
-                (ptime(t1), t1, transID, latency, tries, cname, objname)
+            print("%s %f DEL TransID: %s Latency: %9.6f  Tries: %d %s/%s" % \
+                (ptime(t1), t1, transID, latency, tries, cname, objname))
 
         if logmask & 1 or (logmask & 4 and latency > sizelat[sizenum]):
             logger(2, "%f  %f  %s  %s/%s" % \
@@ -1507,22 +1507,22 @@ def delcont(connection, cname):
             connection.delete_container(cname)
         except ClientException as err:
             if err.http_status == 409:
-                print "container %s is not empty and so couldn't delete" % cname
+                print("container %s is not empty and so couldn't delete" % cname)
             else:
-                print 'error %d deleting container %s' % (err.http_status, cname)
+                print('error %d deleting container %s' % (err.http_status, cname))
         except Exception as err:
             import traceback
             logexec('delete_container() except: %s %s' % (err, traceback.format_exc()))
             logger(9, '', instance)
-            print '%s Unexpected Error - delete_container() exception: %s' % (ptime(time.time()), err)
+            print('%s Unexpected Error - delete_container() exception: %s' % (ptime(time.time()), err))
     else:
-	try:
-	    connection.delete_bucket(cname)
+        try:
+            connection.delete_bucket(cname)
         except boto.exception.S3ResponseError as err:
             if err.status == 409:
-                print "bucket %s is not empty and so couldn't delete" % cname
+                print("bucket %s is not empty and so couldn't delete" % cname)
             else:
-                print 'error %d deleting bucket %s' % (err.http_status, cname)
+                print('error %d deleting bucket %s' % (err.http_status, cname))
 
 
 def ptime(secs):
@@ -1588,17 +1588,17 @@ def execute_proc(args):
         proxy = proxies[proxy_index]
         preauthurl = reset_url(preauthurl, proxy)
         if debug & 64:
-            print "Proxy Connect, resetting preauthurl to", preauthurl
+            print("Proxy Connect, resetting preauthurl to", preauthurl)
 
     if debug & 64:
-        print "*** Actual Connect %s" % ("using preauthurl/preauthtokens" if not s3 else '')
+        print("*** Actual Connect %s" % ("using preauthurl/preauthtokens" if not s3 else ''))
     connection = connect(authurl, username, password, osvars, \
                              preauthurl, preauthtoken)
 
     # connection complete so increment global counter while locked even
     # if connect() fails otherwise we'll hang waiting for updated value
     with counter.get_lock():
-	counter.value += 1
+        counter.value += 1
 
     if connection == -1:
         logexec('connection error!')
@@ -1610,13 +1610,13 @@ def execute_proc(args):
     logexec('connected')
     limit = time.time() + threshold_hang
     while 1:
-	if counter.value == procs:
-	    break
+        if counter.value == procs:
+            break
         if time.time() > limit:
-	    print "warning: connection time limit reached at", ptime(time.time())
+            print("warning: connection time limit reached at", ptime(time.time()))
             lat_dist = []
             latencies = []
-	    scpu = read_stat()
+            scpu = read_stat()
             for i in range(11):
                 lat_dist.append(0)
             return ([test, instance, 0, 0, 0, 0, 0, 0, \
@@ -1628,13 +1628,13 @@ def execute_proc(args):
 
     sync_it = ctime - test_start
     if instance == 0 and (sync_it > threshold_conn):
-        print "warning: rank %s process connections sync took %f seconds" % (options.rank, sync_it)
+        print("warning: rank %s process connections sync took %f seconds" % (options.rank, sync_it))
 
     if debug & 1 and (instance == 0):
-        print "process connections sync took %f seconds" % (ctime - test_start)
+        print("process connections sync took %f seconds" % (ctime - test_start))
 
     if debug & 2: 
-        print "process %s connection took %f seconds" % (instance, ctime - test_start)
+        print("process %s connection took %f seconds" % (instance, ctime - test_start))
 
     #     D e l a y    U n t i l    s y n c t i m e    i f    s p e c i f i e d
 
@@ -1643,14 +1643,14 @@ def execute_proc(args):
     # they start pretty close together because of sync above
     if first_test and options.synctime:
         sleeptime = int(options.synctime) - time.time()
-	if sleeptime > 0:
+        if sleeptime > 0:
             if debug & 1 and instance == 0:
-	        print "%s sleeping/syncing for %s seconds" % (ptime(time.time()), sleeptime)
+                print("%s sleeping/syncing for %s seconds" % (ptime(time.time()), sleeptime))
             sleeptime = int(options.synctime) - time.time()
             time.sleep(sleeptime)
         else:
             if not options.quiet and instance == 0:
-                print "warning: Sync time passed by %f seconds for %s rank: %s at " % (abs(sleeptime), instance, options.rank, ptime(time.time()))
+                print("warning: Sync time passed by %f seconds for %s rank: %s at " % (abs(sleeptime), instance, options.rank, ptime(time.time())))
 
             # if we need to exit on this warning we need to make sure
             # output populated or bad things will happen later
@@ -1676,11 +1676,11 @@ def execute_proc(args):
     #    R u n    1    T e s t
 
     if debug & 1 and instance == 0:
-        print "%s starting tests" % ptime(time.time())
+        print("%s starting tests" % ptime(time.time()))
 
     if debug & 2:
-        print "Start Test for %s - cname: %s  csize: %d  oname: %s range: %s" % \
-            (test, cname, csize, oname, options.range)
+        print("Start Test for %s - cname: %s  csize: %d  oname: %s range: %s" % \
+            (test, cname, csize, oname, options.range))
 
     random_flag = False
     if re.match('[PGD]', test):
@@ -1705,10 +1705,10 @@ def execute_proc(args):
         error("Invalid test: %s" % test)
 
     if debug & 1 and instance == 0:
-        print "%s Tests done" % ptime(time.time())
+        print("%s Tests done" % ptime(time.time()))
 
     if debug & 2:
-        print "Test done for instance", instance
+        print("Test done for instance", instance)
 
     connection.close()
 
@@ -1759,22 +1759,22 @@ def print_line(procs, instance, ops, rate, iops, min, max, tot, errs,
     if match: 
         mixed_p = int(match.group(1))
         mixed_g = int(match.group(2))
-	if mixed_oper == 'p':
-	    if not psum_flag:
-	    	tname = 'p%s' % mixed_p
+        if mixed_oper == 'p':
+            if not psum_flag:
+                tname = 'p%s' % mixed_p
                 proc_tot = (procs/(mixed_p + mixed_g)) * mixed_p
-	    else:
-		tname = 'put'
-	elif mixed_oper == 'g':
-	    if not psum_flag:
-	        tname = 'g%s' % mixed_g
+            else:
+                tname = 'put'
+        elif mixed_oper == 'g':
+            if not psum_flag:
+                tname = 'g%s' % mixed_g
                 proc_tot = (procs/(mixed_p + mixed_g)) * mixed_g
-	    else:
-		tname = 'get'
- 	else:
-	    tname = test
-	    if psum_flag and options.mixopts == 'm' and proc_tot != procs:
-		return
+            else:
+                tname = 'get'
+        else:
+            tname = test
+            if psum_flag and options.mixopts == 'm' and proc_tot != procs:
+                return
 
     line = ''
     if options.rank:
@@ -1792,7 +1792,7 @@ def print_line(procs, instance, ops, rate, iops, min, max, tot, errs,
     if options.utc:
         line += ' %d' % ttime
     line += ' %3d' % retries
-    print line
+    print(line)
 
 
 def median_calc(list):
@@ -1827,7 +1827,7 @@ def print_header():
         if options.utc:
             header += ' %-10s' % 'Timestamp'
         header += ' Ret'
-        print header
+        print(header)
         header_printed = 1
 
 
@@ -1892,20 +1892,20 @@ def print_output(results, procs, mixed_oper=''):
     opst = ratet = iopst = retries = 0
     for i in range(procs):
 
-	# alas, tests are single chars but we store 'put', 'get', etc n the
-	# results so only save 1st char from array AND when doing mixed operation
-	# only look at results that apply to that specified, unless we're doing 'tot'
-	test = results[i][0][0]
-	first_oper_char = test[0]
-	if mixed_test and mixed_oper != 'tot' and first_oper_char != mixed_oper:
-	    continue 
+        # alas, tests are single chars but we store 'put', 'get', etc n the
+        # results so only save 1st char from array AND when doing mixed operation
+        # only look at results that apply to that specified, unless we're doing 'tot'
+        test = results[i][0][0]
+        first_oper_char = test[0]
+        if mixed_test and mixed_oper != 'tot' and first_oper_char != mixed_oper:
+            continue 
 
-	# get operation return the object size read as an additional result because
-	# get-by-range can read less.
-	if first_oper_char == 'g':
-	    bytes_xfer = results[i][-1]
-	else:
-	    bytes_xfer = osize
+        # get operation return the object size read as an additional result because
+        # get-by-range can read less.
+        if first_oper_char == 'g':
+            bytes_xfer = results[i][-1]
+        else:
+            bytes_xfer = osize
 
         oper, instance, elapsed, ops, min, max, tot, errs, \
             lat_dist, latencies, scpu, retries, t0, tf = results[i][0:14]
@@ -1916,7 +1916,7 @@ def print_output(results, procs, mixed_oper=''):
         # combine all latencies into one big array
         lat_all += latencies
 
-	# either use the object size OR bytes_read for calculation
+        # either use the object size OR bytes_read for calculation
         bytes = ops * bytes_xfer
         try:
             rate = bytes / elapsed / 1024 / 1024
@@ -1924,19 +1924,19 @@ def print_output(results, procs, mixed_oper=''):
         except ZeroDivisionError:
             rate = iops = 0
 
-	# Handling of --psum tricky for mixed tests. if doing mixed output, we only 
+        # Handling of --psum tricky for mixed tests. if doing mixed output, we only 
         # print for mixed output and if not doing print output we only print for totals
         psum_print = 0
-	if mixed_test and options.psum \
-	    and ((options.mixopts == 'm' and mixed_oper != 'tot') or \
-		 (options.mixopts != 'm' and mixed_oper == 'tot')):
-	    psum_print = 1
+        if mixed_test and options.psum \
+            and ((options.mixopts == 'm' and mixed_oper != 'tot') or \
+                 (options.mixopts != 'm' and mixed_oper == 'tot')):
+            psum_print = 1
 
         if (options.psum and not mixed_test) or psum_print:
             print_line(instance, instance, ops, rate, iops, min, max,
                        tot, errs, cpu_percent, lat_dist,
                        median_calc(latencies), etime, retries,
-		       bytes_xfer, mixed_oper, t0, tf, True)
+                       bytes_xfer, mixed_oper, t0, tf, True)
 
         opst += ops
         ratet += rate
@@ -1963,7 +1963,7 @@ def print_output(results, procs, mixed_oper=''):
 
     print_line(procs, instance + 1, opst, ratet, iopst, latmin, latmax,
                lattot, errors, cpu_percent, ldist_tot, median, etime,
-	       retries, bytes_xfer, mixed_oper, t0min, tfmax)
+               retries, bytes_xfer, mixed_oper, t0min, tfmax)
 
 
 def control_c_handler(signal, frame):
@@ -2015,9 +2015,9 @@ if __name__ == "__main__":
     urlver = urllib3.__version__
     fields = urlver.split('.')
     if fields[0] == 'dev' or int(fields[0]) == 1 and int(fields[1]) < 8:
-        print "WARNING: your are running version '%s' of urllib3" % urlver
-        print "         which may cause small objects operations to run slower"
-        print "         it is recommended you run pip install --upgrade urllib3"
+        print("WARNING: your are running version '%s' of urllib3" % urlver)
+        print("         which may cause small objects operations to run slower")
+        print("         it is recommended you run pip install --upgrade urllib3")
 
     # disable requests library warning when using --insecure
     if options.insecure == True:
@@ -2077,10 +2077,10 @@ if __name__ == "__main__":
             for env in os.environ:
                 if re.search('proxy', env):
                    if not header_printed:
-                        print "*** Proxy environment variables ***"
+                        print("*** Proxy environment variables ***")
                         header_printed = True
-                   print "%s=%s" % (env, os.environ.get(env))
-        print "*** Initial Connect %s" % ("- get preauthtoken/preauthurl" if not s3 else '')
+                   print("%s=%s" % (env, os.environ.get(env)))
+        print("*** Initial Connect %s" % ("- get preauthtoken/preauthurl" if not s3 else ''))
 
     connection = connect(authurl, username, password, osvars)
     if connection == -1:
@@ -2090,7 +2090,7 @@ if __name__ == "__main__":
         preauthtoken = connection.token
         preauthurl = connection.url
         if debug & 64:
-            print "  Got - Auth: %s  Url: %s" % (preauthtoken, preauthurl)
+            print("  Got - Auth: %s  Url: %s" % (preauthtoken, preauthurl))
 
     else:
         preauthtoken = preauthurl = ''
@@ -2116,7 +2116,7 @@ if __name__ == "__main__":
             no_proxy += ',%s' % addr
         os.environ['no_proxy'] = no_proxy
         if debug & 1:
-            print "Defining no_proxy:",  os.environ['no_proxy']
+            print("Defining no_proxy:",  os.environ['no_proxy'])
 
     if options.repeats:
         repeats = int(options.repeats)
@@ -2148,10 +2148,10 @@ if __name__ == "__main__":
     logexec('Beginning execution for procset: %s' % options.procset)
 
     if options.echo:
-        print '#',
+        print('#', end=' ')
         for i in range(len(sys.argv)):
-            print '%s '% sys.argv[i],
-        print
+            print('%s '% sys.argv[i], end=' ')
+        print()
 
     # save our pid which is parent to the subprocesses and set a ^C handler
     ppid = os.getpid()
@@ -2171,11 +2171,11 @@ if __name__ == "__main__":
             # a new section of output with a new header unless --repeat
             reset_last(procs)
 
-	    puts_per_proc = []
+            puts_per_proc = []
             mixed_ppp = []
-	    for i in range(procs):
-		puts_per_proc.append(0)
-		mixed_ppp.append(0)
+            for i in range(procs):
+                puts_per_proc.append(0)
+                mixed_ppp.append(0)
 
             if repeats == 1:
                 header_printed = 0
@@ -2189,22 +2189,22 @@ if __name__ == "__main__":
                     fixed_object = build_object()
                     last_size = osize
 
-		# may may reset the test name if mixed so save its
-		# raw name too in case we need it later
+                # may may reset the test name if mixed so save its
+                # raw name too in case we need it later
                 tests = options.tests.split(',')
                 for testnum in range(len(tests)):
                     test = test_raw = tests[testnum]
                     match = re.search('p(\d+)g(\d+)', test)
-		    if match:
+                    if match:
                         mixed_test = True
                         mixed_p = int(match.group(1))
                         mixed_g = int(match.group(2))
- 		    else:
-			mixed_test = False
+                    else:
+                        mixed_test = False
 
-		    # save current time this test processing starts so we can
-		    # report offset later, really just for debugging
-		    test_start= time.time()
+                    # save current time this test processing starts so we can
+                    # report offset later, really just for debugging
+                    test_start= time.time()
 
                     # what time should execution actually start?
                     if options.synctime:
@@ -2244,27 +2244,27 @@ if __name__ == "__main__":
                             if i < mixed_p:
                                 test = 'p'
                             else:
-				test = 'g'
+                                test = 'g'
 
-			# NOTE - we ALWAYS point non-put tests as well as mixed tests that
-			# hadn't been preceded by a standard PUT to counts for the
-			# last full put test, which will may have been pre-populated via
-			# --putsperproc
+                        # NOTE - we ALWAYS point non-put tests as well as mixed tests that
+                        # hadn't been preceded by a standard PUT to counts for the
+                        # last full put test, which will may have been pre-populated via
+                        # --putsperproc
                         if test == 'p' or \
-				(mixed_test and not put_test_first) or \
-				(not mixed_test and not re.search('p', options.tests)):
+                                (mixed_test and not put_test_first) or \
+                                (not mixed_test and not re.search('p', options.tests)):
                             numobj = last[inst]
 
-			    # further and ONLY if a pure PUT test, we reset the test time
-			    # which may ultimately be used forp setting the container name
-			    if test_raw == 'p':
-                            	ttime = stime    # all tests get same ttime w/ UTC
+                            # further and ONLY if a pure PUT test, we reset the test time
+                            # which may ultimately be used forp setting the container name
+                            if test_raw == 'p':
+                                    ttime = stime    # all tests get same ttime w/ UTC
                         else:
                             numobj = puts_per_proc[inst]
-				
+                                
                         if debug & 16:
-                            print "Exec - I: %d Obj: %d Test: %s Time: %f" % \
-                                (inst, numobj, test, stime)
+                            print("Exec - I: %d Obj: %d Test: %s Time: %f" % \
+                                (inst, numobj, test, stime))
 
                         cname = options.cname
                         if options.utc:
@@ -2278,7 +2278,7 @@ if __name__ == "__main__":
                         # noting since they all MUST be the same we need only
                         # look at first instance
                         if inst == 0:
-			    if not s3:
+                            if not s3:
                                 try:
                                     response = {}
                                     headers = connection.head_container(cname)
@@ -2302,14 +2302,14 @@ if __name__ == "__main__":
                                     error('container storage policy for %s already set to %s'
                                           % (cname, cpolicy))
                             else:
-				try:
-				    connection.get_bucket(cname)
-				    cpolicy = 's3'    # just as long as its not blank
+                                try:
+                                    connection.get_bucket(cname)
+                                    cpolicy = 's3'    # just as long as its not blank
                                 except boto.exception.S3ResponseError as err:
-				    if err.status == 403:
-					error('get_bucket failure: forbidden 403, created by different api?')
-				    elif err.status != 404:
-					error("Unexpected response: %s" % err)
+                                    if err.status == 403:
+                                        error('get_bucket failure: forbidden 403, created by different api?')
+                                    elif err.status != 404:
+                                        error("Unexpected response: %s" % err)
 
                         # make sure container for get/delete tests exist
                         # before proceeding, which means we found cpolicy
@@ -2320,9 +2320,9 @@ if __name__ == "__main__":
                         # if not doing random or flat object I/O, object
                         # names all start with base-rank-inst
                         oname = options.oname
-			obj_inst = inst
-			if test == 'g' and obj_max_proc != 0:
-			    obj_inst %= obj_max_proc
+                        obj_inst = inst
+                        if test == 'g' and obj_max_proc != 0:
+                            obj_inst %= obj_max_proc
                         if re.search('u', options.objopts):
                             oname += '-%d' % ttime
                         if not re.match('[PGD]', test) and \
@@ -2330,7 +2330,7 @@ if __name__ == "__main__":
                             oname += "-%s-%d" % (options.rank, obj_inst)
 
                         if debug & 8:
-                            print 'debug: cname %s  oname: %s' % (cname, oname)
+                            print('debug: cname %s  oname: %s' % (cname, oname))
 
                         # for flat hierarchies or when in append mode (which
                         # assumes flat hierarchies), we need to know if
@@ -2350,7 +2350,7 @@ if __name__ == "__main__":
                                             not cname in created:
                                         warn = "warning: creating '%s'" % cname
                                         warn += " in append mode"
-                                        print warn
+                                        print(warn)
                                         created[cname] = ''
                                     else:
                                         etype = "head_container error: "
@@ -2370,25 +2370,25 @@ if __name__ == "__main__":
                                 headers = {}
                                 if policy != '':
                                     headers ['X-Storage-Policy'] = policy
-			        if s3:
-				    try:
-				        connection.create_bucket(cname)
-				    except boto.exception.S3ResponseError as err:
-					print "create_bucket failed:", err
+                                if s3:
+                                    try:
+                                        connection.create_bucket(cname)
+                                    except boto.exception.S3ResponseError as err:
+                                        print("create_bucket failed:", err)
                                     except Exception as err:
                                         import traceback
-					print ">>>>>>>>>>>><<<<<<<<<<<<<"
+                                        print(">>>>>>>>>>>><<<<<<<<<<<<<")
                                         logexec('put_container except: %s %s' % \
                                                     (err, traceback.format_exc()))
                                         error('create_bucket error: %s' % err)
 
 
-				else:
-				    try:
+                                else:
+                                    try:
                                         connection.put_container(cname, headers=headers)
                                         logexec('container %d created' % inst)
                                     except Exception as err:
-				        print "put_container failed:", err
+                                        print("put_container failed:", err)
                                         if err.http_status == 409:
                                             error("Error: 409 Container: %s.  Could be policy mismatch" % cname)
 
@@ -2402,7 +2402,7 @@ if __name__ == "__main__":
                                                     (err, traceback.format_exc()))
                                         error('Error: put_container exc: %s' % err)
 
-			inputs.append([inst, preauthurl, preauthtoken, cname, \
+                        inputs.append([inst, preauthurl, preauthtoken, cname, \
                                            csize, oname, numobj, test, stime])
 
                     poolOutputs = pool.map(execute_proc, inputs)
@@ -2417,8 +2417,8 @@ if __name__ == "__main__":
                         logexec('I: %s' % i)
                         oneproc = poolOutputs[i]
                         if re.search('error', oneproc[0], re.IGNORECASE):
-                            print "%s, try -d128 for more clues " % oneproc[0],
-                            print "in /tmp on remote node"
+                            print("%s, try -d128 for more clues " % oneproc[0], end=' ')
+                            print("in /tmp on remote node")
                             unexpected_error = 1
                             break
 
@@ -2429,49 +2429,49 @@ if __name__ == "__main__":
 
                         # for full PUT test save number of objs actually written in
                         # case we terminated due to a timer rather than count
-			# for mixed tests we save to our alternate array though at
-			# this time we're not doing anything with it.
+                        # for mixed tests we save to our alternate array though at
+                        # this time we're not doing anything with it.
                         if oneproc[0] == 'put':
                             instance = oneproc[1]
                             nobjects = oneproc[3]
-			    if not mixed_test:
-                        	puts_per_proc[instance] = nobjects
-			    else:
-				# track how many mixed PUTs we just did BUT if we're going to delete it'll use
-				# puts_per_proc[] and it we actually wrote more, we need to updates its count
-				# so we'll delete them all
+                            if not mixed_test:
+                                puts_per_proc[instance] = nobjects
+                            else:
+                                # track how many mixed PUTs we just did BUT if we're going to delete it'll use
+                                # puts_per_proc[] and it we actually wrote more, we need to updates its count
+                                # so we'll delete them all
                                 mixed_ppp[instance] = nobjects
-				puts_per_proc[instance] = nobjects if nobjects > last[instance] else last[instance]
+                                puts_per_proc[instance] = nobjects if nobjects > last[instance] else last[instance]
 
                     if unexpected_error:
                         continue
-		    
-		    if not mixed_test:
-                    	print_output(results, procs)
-		    else:
-			p_tot = (procs/(mixed_p + mixed_g)) * mixed_p
+                    
+                    if not mixed_test:
+                            print_output(results, procs)
+                    else:
+                        p_tot = (procs/(mixed_p + mixed_g)) * mixed_p
                         g_tot = (procs/(mixed_p + mixed_g)) * mixed_g
-			if options.mixopts == 'm':
+                        if options.mixopts == 'm':
                             print_output(results, procs, 'p')
                             print_output(results, procs, 'g')
                         print_output(results, procs, 'tot')
                     logexec('printing complete')
 
-		    if test[0] == 'p':
-		        for i in range(procs):
-			    last[i] = puts_per_proc[i]
+                    if test[0] == 'p':
+                        for i in range(procs):
+                            last[i] = puts_per_proc[i]
 
                     # note there WILL be holes in the ppp for mixed put tests
-		    if options.putsperproc:
-			ppp = ''
+                    if options.putsperproc:
+                        ppp = ''
                         if test_raw == 'p':
                             for puts in puts_per_proc:
                                 ppp += '%d:' % puts
-                            print "PutsPerProc: %s" % ppp[:-1]
-			elif re.match('p\d', test_raw):
+                            print("PutsPerProc: %s" % ppp[:-1])
+                        elif re.match('p\d', test_raw):
                             for puts in mixed_ppp:
                                 ppp += '%d:' % puts
-                            print "PutsPerProc: %s" % ppp[:-1]
+                            print("PutsPerProc: %s" % ppp[:-1])
 
                     # unless --cont-nodelete, delete container(s) after
                     # delete test run
@@ -2482,7 +2482,7 @@ if __name__ == "__main__":
                         if options.ctype == 'bynode':
                             cname += "-%s" % options.rank
                         if debug & 1:
-                            print 'deleting container(s): %s' % cname
+                            print('deleting container(s): %s' % cname)
 
                         if options.ctype != 'byproc':
                             delcont(connection, cname)
@@ -2506,7 +2506,7 @@ if __name__ == "__main__":
 
                     if sleep_test:
                         if debug & 256:
-                            print "End-of-test, sleeping", sleep_test
+                            print("End-of-test, sleeping", sleep_test)
                         time.sleep(sleep_test)
 
                 # on the last testset, skip sleep
@@ -2515,7 +2515,7 @@ if __name__ == "__main__":
 
                 if sleep_testset:
                     if debug & 256:
-                        print "End-of-testset, sleeping:", sleep_testset
+                        print("End-of-testset, sleeping:", sleep_testset)
                     time.sleep(sleep_testset)
 
             # on the last proc, skip sleep
@@ -2524,7 +2524,7 @@ if __name__ == "__main__":
 
             if sleep_proc:
                 if debug & 256:
-                    print "End-of-proc, sleeping:", sleep_proc
+                    print("End-of-proc, sleeping:", sleep_proc)
                     time.sleep(sleep_proc)
 
     logexec('processing complete')
