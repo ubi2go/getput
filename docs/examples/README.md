@@ -5,6 +5,12 @@
 
 # run simple s3 test
 
+```console
+cd getput/docs/examples 
+ln -s ../../getput getput
+ln -s ../../gpmulti gpmulti
+ln -s ../../gpsuite gpsuite
+```
 
 ## export environment variables
 
