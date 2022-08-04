@@ -28,7 +28,7 @@
 #  256 - show pretest command
 
 import os
-import re
+import regex as re
 import sys
 import glob
 import time
@@ -457,7 +457,7 @@ def execute(queue, command):
         print("Results", results)
 
     trimmed = ''
-    for line in results.split('\n'):
+    for line in results.decode('utf-8').split('\n'):
         # note that if random tests, the get/put/del will be followed by R
         if re.search('error|warning|debug| getR* | putR* | delR* |PutsPerProc| p\d+\g\d+ | [pg]\d+ ',
                      line, re.IGNORECASE):

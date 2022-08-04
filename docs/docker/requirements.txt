@@ -1,0 +1,6 @@
+requests
+python-swiftclient
+python-keystoneclient
+boto
+md5hash
+regex
