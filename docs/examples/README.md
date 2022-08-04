@@ -44,7 +44,41 @@ Rank Test  Clts Proc  OSize  Start     End        MB/Sec   Ops   Ops/Sec Errs La
 * test multiple object sizes: 4k, 1M,4M,16M,64M,128M
 * run test mit different parallel processes: 1,2,4,8,16
   (note: the test client need enough CPU, RAM and NETWORK ressources to run multiple processes parallel)
+* report latency distributions at this granularity: --ldist=1 
 
 ```console
-    python3 getput --s3 -cextended -oext -n1000 -s4k,1M,4M,16M,64M,128M --procs=1,2,4,8,16 -tp,g,d
+    python3 getput --s3 -cextended -oext -n1000 -s4k,1M,4M,16M,64M,128M --procs=1,2,4,8,16 -tp,g,d --ldist=1 --utc
+```
+# run distributed s3 test
+
+## suite settings file
+
+gpsuite-simple.conf
+
+```
+[simplte-test-s3]
+comment  = simple test configuration
+options  = --s3
+type     = simple
+cname    = cont-name
+oname    = obj-name
+sizes    = 1k,10k,100k,1m,10m
+procs    = 1,2,4,8
+creds    = gpsuite-s3-creds
+nodes    = gpsuite-s3-nodes
+username = root
+maxnodes = 1
+runtime  = 120
+synctime = 5
+utc      = 1
+```
+## list suites
+
+```console
+python3 gpsuite --list --config gpsuite-simple.conf
+simplte-test-s3       simple test configuration
+```
+
+```console
+    gpsuite --suite simplte-test-s3 --config gpsuite-simple.conf 
 ```
