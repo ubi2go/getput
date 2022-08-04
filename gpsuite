@@ -593,6 +593,7 @@ if __name__ == "__main__":
 
         line = line[:-1]
         name, value = line.split('=')
+        value.replace(" ", "")
 
         # load creds into our environment which later we pas
         # to the subprocess when running gpmulti
