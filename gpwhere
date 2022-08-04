@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/python3 -u
 
 # Copyright 2016 Hewlett-Packard Development Company, L.P.
 # Use of this script is subject to HP Terms of Use at
@@ -26,7 +26,7 @@ buckets = {}
 gran = 1000
 
 def error(text):
-    print text
+    print(text)
     sys.exit()
 
 def lat_calc(type, lat):
@@ -42,7 +42,7 @@ def proc_results(results, summary):
     time = ''
     for line in results.split('\n'):
         if debug & 2 and line != '':
-            print line
+            print(line)
         if line == '':
             break
 
@@ -136,11 +136,11 @@ def proc_txid(txid, end='', tx_time='', tries=''):
         command = 'pdsh -Rssh %s sudo grep %s /var/log/swift/swift.log 2>%s' % (options.pdsh, txid, errlog)
         
         if debug &1:
-            print 'Command:', command
+            print('Command:', command)
         try:
             results = subprocess.check_output(command, shell=True)
             if debug & 2:
-                print results
+                print(results)
             if results != '':
                 found = True
         except:
@@ -152,7 +152,7 @@ def proc_txid(txid, end='', tx_time='', tries=''):
             for line in f:
                 if re.search('exit code', line):
                     continue
-                print line,
+                print(line, end=' ')
         os.remove(errlog)
 
         time = proc_results(results, summary)
@@ -163,11 +163,11 @@ def proc_txid(txid, end='', tx_time='', tries=''):
         for addr in addrs:
             command = '%s %s sudo grep %s /var/log/swift/swift.log' % (ssh, addr, txid) 
             if debug & 1:        
-                print "Command:", command
+                print("Command:", command)
             try:
                 results = subprocess.check_output(command, shell=True)
                 if debug & 2:
-                    print results
+                    print(results)
                 found = True
             except:
                 continue
@@ -175,7 +175,7 @@ def proc_txid(txid, end='', tx_time='', tries=''):
             time = proc_results(results, summary)
 
     if not found:
-        print "no log records found with txid:", txid
+        print("no log records found with txid:", txid)
         return
 
     output = '%s' % txid
@@ -204,16 +204,16 @@ def proc_txid(txid, end='', tx_time='', tries=''):
             if not re.match('E', time):
                 lat_calc(t, time)
 
-    print "%-160s" % output,
+    print("%-160s" % output, end=' ')
 
     if len(timeouts):
-        print "TimeOuts:",
+        print("TimeOuts:", end=' ')
         for disk in timeouts:
-            print disk,
+            print(disk, end=' ')
     if errors > 0:
-        print "Errors:", errors,
+        print("Errors:", errors, end=' ')
         output += " Errors: %s" % errors
-    print
+    print()
 
 parser = OptionParser(add_help_option=False)
 parser.add_option('-d', dest='debug', help='debug mask', default='0')
@@ -228,7 +228,7 @@ parser.add_option('-w', dest='pdsh',  help='psdh -w string OR file', default='')
 try:
     (options, args) = parser.parse_args(sys.argv[1:])
 except:
-    print 'invalid command'
+    print('invalid command')
     sys.exit()
 
 if options.help:
@@ -236,11 +236,11 @@ if options.help:
     sys.exit()
 
 if options.swift and options.pdsh:
-    print "-s and -w are mutually exclusive"
+    print("-s and -w are mutually exclusive")
     sys.exit()
 
 if not options.swift and not options.pdsh:
-    print "-s OR -w is required"
+    print("-s OR -w is required")
     sys.exit()
 
 debug = int(options.debug)
@@ -297,8 +297,8 @@ with open(options.txid, 'r') as f:
 if options.lat:
     for i in ('p', 'a', 'c', 'o'):
 	#print "%s: %s" % (i, buckets[i])
-	print "Bucket %s" % i,
+	print("Bucket %s" % i, end=' ')
         for j in sorted(buckets[i]):
             latency = "  %4d:%d" % (j, buckets[i][j])
-	    print " %-7s" % latency,
-	print
+	    print(" %-7s" % latency, end=' ')
+	print()
