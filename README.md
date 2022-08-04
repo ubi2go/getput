@@ -1,21 +1,29 @@
-This is the getput benchmarking tool suite.
+This is the getput benchmarking tool suite for SWIFT and S3 object storage.
 
-Dependencies:
+## Dependencies
 
 python-swiftclient
+python-boto
 
-Installation:
+## Installation
 
+### Linux
+```console
 git clone https://github.com/markseger/getput.git
-<BR>cd getput
-<BR>sudo python setup.py install
+cd getput
+sudo python setup.py install
+```
 
-Documentation:
+### Docker
+
+https://github.com/ubi2go/getput/tree/master/docs/docker
+
+## Documentation
 
 /usr/share/doc/gptools/getting-started.txt
 <BR>/usr/share/doc/gptools/Introduction.pdf
 
-Notes:
+## Notes
 
 Version 2 of the swift client fixes the problem with longer PUT latencies
 for small objects BUT you need to make sure you have the latest version
