@@ -3,8 +3,10 @@ This is the getput benchmarking tool suite for SWIFT and S3 object storage.
 
 ## Dependencies
 
-python-swiftclient
-python-boto
+* python3
+* python-requests
+* python-swiftclient
+* python-boto
 
 ## Installation
 
