@@ -58,7 +58,7 @@ gpsuite-simple.conf
 ```
 [simplte-test-s3]
 comment  = simple test configuration
-options  = --s3
+options  = --s3 
 type     = simple
 cname    = cont-name
 oname    = obj-name
@@ -79,6 +79,8 @@ utc      = 1
     python3 gpsuite --list --config gpsuite-simple.conf
     simplte-test-s3       simple test configuration
 ```
+
+## execute test
 
 ```console
     gpsuite --suite simplte-test-s3 --config gpsuite-simple.conf 
