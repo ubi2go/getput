@@ -72,11 +72,12 @@ runtime  = 120
 synctime = 5
 utc      = 1
 ```
+
 ## list suites
 
 ```console
-python3 gpsuite --list --config gpsuite-simple.conf
-simplte-test-s3       simple test configuration
+    python3 gpsuite --list --config gpsuite-simple.conf
+    simplte-test-s3       simple test configuration
 ```
 
 ```console
