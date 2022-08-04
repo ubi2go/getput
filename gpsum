@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/python3 -u
 
 # Copyright 2016 Hewlett-Packard Development Company, L.P.
 # Use of this script is subject to HP Terms of Use at
@@ -21,7 +21,7 @@ import sys
 from optparse import OptionParser, OptionGroup
 
 def error(text):
-    print text
+    print(text)
     sys.exit()
 
 def main(argv):
@@ -137,17 +137,17 @@ def main(argv):
             test = tname[1:]
 
             # headers
-            print "Test: %s  %s" % (test, col_name)
-            print '%4s %3s %3s ' % ('Totl', 'Clt', 'Prc'),
+            print("Test: %s  %s" % (test, col_name))
+            print('%4s %3s %3s ' % ('Totl', 'Clt', 'Prc'), end=' ')
             for osize in sorted(obj_sizes):
                 size = str(int(osize[1:])) + osize[0]
-                print ' %7s' % size,
-            print
+                print(' %7s' % size, end=' ')
+            print()
 
             # print one line
             for threads in sorted(num_threads):
                 clients, procs = num_threads[threads].split('-')
-                print '%4d %3s %3d ' % (int(procs), clients, int(procs) / int(clients)),
+                print('%4d %3s %3d ' % (int(procs), clients, int(procs) / int(clients)), end=' ')
 
                 for osize in sorted(obj_sizes):
                     key = '%s-%04s-%s' % (tname, threads, osize)
@@ -156,10 +156,10 @@ def main(argv):
                         value = data[key][col_type]
                     except KeyError:
                         value = '-'
-                    print ' %7s' % value,
+                    print(' %7s' % value, end=' ')
 
-                print
-            print
+                print()
+            print()
 
     else:
         # headers
@@ -172,7 +172,7 @@ def main(argv):
 
             line += ' '
             line += '{type:{width}}'.format(type='    *** %s ***' % test, width=data_width)
-        print line
+        print(line)
 
         line = '%4s %3s %3s ' % ('Totl', 'Clt', 'Prc')
         for tname in sorted(tests):
@@ -184,7 +184,7 @@ def main(argv):
             for osize in sorted(obj_sizes):
                 size = str(int(osize[1:])) + osize[0]
                 line += ' %8s' % size
-        print line
+        print(line)
 
         # data
         for threads in sorted(num_threads):
@@ -204,7 +204,7 @@ def main(argv):
                     except KeyError:
                         value = '-'
                     line += ' %8s' % value
-            print line
+            print(line)
 
 
 if __name__ == "__main__":
