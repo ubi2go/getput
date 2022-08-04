@@ -430,11 +430,11 @@ def config_check():
         if drift_error:
             error('either syncronize clocks OR override drift time with --drift')
 
-    if ping_fail:
-        error("ping test failed so you must fix the problem to continue")
+        if ping_fail:
+            error("ping test failed so you must fix the problem to continue")
 
-    if max > num:
-        error("'maxnodes' set to %d for suite, but only %d clients in node file" %
+        if max > num:
+            error("'maxnodes' set to %d for suite, but only %d clients in node file" %
               (max, num))
 
 
