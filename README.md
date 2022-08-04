@@ -14,7 +14,7 @@ This is the getput benchmarking tool suite for SWIFT and S3 object storage.
 ```console
 git clone https://github.com/markseger/getput.git
 cd getput
-sudo python setup.py install
+sudo python3 setup.py install
 ```
 
 ### Docker

@@ -73,6 +73,55 @@ synctime = 5
 utc      = 1
 ```
 
+## test node configuration
+
+### create a ssh key
+```console
+ssh-keygen
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): y
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in y
+Your public key has been saved in y.pub
+The key fingerprint is:
+SHA256:Nc658XkxMgRGDjS7W0UBhmXsjGQKalCbekupExwtpYU root@demo
+The key's randomart image is:
++---[RSA 3072]----+
+| .oo   .+=O.o.   |
+|.E=o.   +O.o     |
+| =oo . +.++ o    |
+|..=.  . .=o=     |
+|oo+     S * o o  |
+| = .     o + + o |
+|o .     . . o .  |
+| .           .   |
+|                 |
++----[SHA256]-----+
+```
+
+### add the public key to all test-nodes 
+
+In our example is the user root, not recommended for production systems. Only used in the test environment.
+
+```console
+    cat ~/.ssh/id_rsa.pub | ssh USER@HOST "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+```
+
+### login in via ssh and key to all the nodes 
+
+accept the connection at the first try 
+
+### clone the git repository 
+
+git clone https://github.com/ubi2go/getput.git
+cd getput
+sudo python3 setup.py install
+
+### time synchronization of all nodes
+
+install ntp,ntpd or chrony and sync the nodes to a single time source.
+
 ## create node file
 
 gpsuite-s3-nodes
@@ -93,6 +142,7 @@ RGW_SECRET_KEY=<secret_key>
 RGW_HOST=<endpoint domainname>
 RGW_PORT=<port e.g. 443>
 ```
+
 
 ## list suites
 
