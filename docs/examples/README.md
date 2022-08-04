@@ -73,6 +73,27 @@ synctime = 5
 utc      = 1
 ```
 
+## create node file
+
+gpsuite-s3-nodes
+```
+#<list of hosts: each host a new line>
+test-node1
+test-node2
+...
+```
+
+## create creds file
+
+gpsuite-s3-creds
+
+```
+RGW_ACCESS_ID=<access_id>
+RGW_SECRET_KEY=<secret_key>
+RGW_HOST=<endpoint domainname>
+RGW_PORT=<port e.g. 443>
+```
+
 ## list suites
 
 ```console
