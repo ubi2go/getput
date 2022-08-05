@@ -34,7 +34,7 @@ def lat_calc(type, lat):
     bucket = int(round(float(lat) * gran))
     #print "TYPE: %s LAT: %s  BKT: %d" % (type, lat, bucket)
     if bucket not in buckets[type]:
-	buckets[type][bucket] = 0
+        buckets[type][bucket] = 0
     buckets[type][bucket] += 1
 
 def proc_results(results, summary):
@@ -72,13 +72,13 @@ def proc_results(results, summary):
             summary[type].append("%s Q" % name)
             continue
         if re.search('ERROR|disconnected', line):
-	    error = '???'
+            error = '???'
             if re.search('100-c', line):
-	        error='Expect'
+                error='Expect'
             if re.search('ConnectionTimeout', line):
-	        error='T'
+                error='T'
             if re.search('disconnected', line):
-	        error='D'
+                error='D'
             summary[type].append("%s E:%s" % (name, error))
             continue
 
@@ -115,7 +115,7 @@ def proc_results(results, summary):
         #print "summary[%s] = %s %s" % (type, name, time)
         d = ''
         if type == 'o':
-	    d = ':%s%s' % (disk, mod)
+            d = ':%s%s' % (disk, mod)
         summary[type].append("%s%-10s %s" % (name, d, time))
 
     return(time)
@@ -180,7 +180,7 @@ def proc_txid(txid, end='', tx_time='', tries=''):
 
     output = '%s' % txid
     if end != '':
-	output += " %s" % end
+        output += " %s" % end
     if tx_time != '':
         output += '  %s  %s' % (tries, tx_time)
     time += '  '
@@ -189,15 +189,15 @@ def proc_txid(txid, end='', tx_time='', tries=''):
     for t in ('p', 'a', 'c', 'o'):
         for sum in summary[t]:
             name, time = sum.split()
-	    # force disks names to line for when we have more than 9
-	    if t == 'o' and re.search('\d+$', name):
-		if not re.search('disk\d{2}', name):
-		    name += ' '
-		name += ' '
-	    if output != '':
-		if options.vert or (options.vertt and t != last):
-	            output += '\n'
-	    last = t
+            # force disks names to line for when we have more than 9
+            if t == 'o' and re.search('\d+$', name):
+                if not re.search('disk\d{2}', name):
+                    name += ' '
+                name += ' '
+            if output != '':
+                if options.vert or (options.vertt and t != last):
+                    output += '\n'
+            last = t
             output += "  %s/%s %s" % (t, name, time)
 
             # only if valid time
@@ -281,14 +281,14 @@ with open(options.txid, 'r') as f:
 
         # if output from --latexc, get time and txid
         if re.match('Host', line):
-	    end = fields[5]
+            end = fields[5]
             time = fields[9]
             txid = fields[14]
             tries = fields[16]
 
         # assume we're getting it in --exclog format
         else:
-	    end = fields[1]
+            end = fields[1]
             time = fields[5]
             txid = fields[10]
             tries = fields[12]
@@ -296,9 +296,9 @@ with open(options.txid, 'r') as f:
 
 if options.lat:
     for i in ('p', 'a', 'c', 'o'):
-	#print "%s: %s" % (i, buckets[i])
-	print("Bucket %s" % i, end=' ')
+        #print "%s: %s" % (i, buckets[i])
+        print("Bucket %s" % i, end=' ')
         for j in sorted(buckets[i]):
             latency = "  %4d:%d" % (j, buckets[i][j])
-	    print(" %-7s" % latency, end=' ')
-	print()
+            print(" %-7s" % latency, end=' ')
+        print()
