@@ -359,9 +359,6 @@ def main(argv):
                        help="defined value for X-Trans-Id-Extra")
     groupc.add_option('--headers',   dest='headers',
                        help="additional headers")
-    groupc.add_option('--insecure', dest='insecure',
-                      action='store_true', default=False,
-                      help="allow access without verifying SSL certs")
     groupc.add_option('--latexc',   dest='latexc',
                       help="stop when max latency matches exception")
     groupc.add_option('--logops',   dest='logops',
@@ -402,6 +399,8 @@ def main(argv):
                       help='times to sleep at various test points')
     groupc.add_option('--s3', dest='s3', action='store_true',
                       help='use s3 api')
+    groupc.add_option('--insecure', dest='insecure', action='store_true',
+                      help='use insecure http endpoint')
     groupc.add_option('--scheme',   dest='scheme', default='',
                       help='authurl connection scheme, http|https')
     groupc.add_option('--warnexit', dest='warnexit',
@@ -711,6 +710,11 @@ def connect(authurl, username, password, osvars, \
         s3_host, s3_port = authurl.split(':')
         s3_port = int(s3_port)
 
+        if insecure:
+            s3_insecure=False
+        else:
+            s3_insecure=True
+
         if debug & 64:
             print("Connect - Access: %s Secret: %s Host: %s Port: %s" % \
                 (s3_access_key, s3_secret_key, s3_host, s3_port))
@@ -720,7 +724,7 @@ def connect(authurl, username, password, osvars, \
             aws_access_key_id = s3_access_key,
             aws_secret_access_key = s3_secret_key,
             host = s3_host,
-            #is_secure=False,               # uncomment if you are not using ssl
+            is_secure = s3_insecure,
             calling_format = boto.s3.connection.OrdinaryCallingFormat(),
             port=s3_port,
             )
