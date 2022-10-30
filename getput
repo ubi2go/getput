@@ -435,6 +435,7 @@ def main(argv):
         sys.exit()
 
     s3 = options.s3
+    insecure = options.insecure
     if s3:
         global boto
 
@@ -699,7 +700,7 @@ if not hasattr(Connection, 'close'):
 
 
 def connect(authurl, username, password, osvars, \
-                preauthurl=None, preauthtoken=None):
+                preauthurl=None, preauthtoken=None,insecure=False):
     """
     make a connection using swift or s3 api
     """
@@ -710,10 +711,9 @@ def connect(authurl, username, password, osvars, \
         s3_host, s3_port = authurl.split(':')
         s3_port = int(s3_port)
 
+        s3_insecure=True
         if insecure:
             s3_insecure=False
-        else:
-            s3_insecure=True
 
         if debug & 64:
             print("Connect - Access: %s Secret: %s Host: %s Port: %s" % \
@@ -1111,13 +1111,13 @@ def put(connection, instance, donetime, cname, csize, oname, random_flag):
                     puts -= 1
                 
                     connection = connect(authurl, username, password, osvars, \
-                                         preauthurl, preauthtoken)
+                                         preauthurl, preauthtoken, insecure)
                     if connection == -1:
                         error('Error: ClientException connect error')
                     preauthtoken = connection.token
 
                     connection = connect(authurl, username, password, osvars, \
-                                         preauthurl, preauthtoken)
+                                         preauthurl, preauthtoken, insecure)
                 else:
                     api_error('put', instance, cname, objname, err, response)
                 continue
@@ -1278,13 +1278,13 @@ def get(connection, instance, donetime, cname, csize, oname, random_flag):
                     gets -= 1
 
                     connection = connect(authurl, username, password, osvars, \
-                                         preauthurl, preauthtoken)
+                                         preauthurl, preauthtoken, insecure)
                     if connection == -1:
                         error('Error: ClientException connect error')
                     preauthtoken = connection.token
 
                     connection = connect(authurl, username, password, os_vars, \
-                                         preauthurl, preauthtoken)
+                                         preauthurl, preauthtoken, insecure)
                 else:
                     api_error('get', instance, cname, objname, err, response)
                 continue
@@ -1446,14 +1446,14 @@ def delobj(connection, instance, donetime, cname, csize, oname, random_flag):
                     dels -= 1
                 
                     connection = connect(authurl, username, password, osvars, \
-                                         preauthurl, preauthtoken)
+                                         preauthurl, preauthtoken, insecure)
 
                     if connection == -1:
                         error('Error: ClientException connect error')
                     preauthtoken = connection.token
 
                     connection = connect(authurl, username, password, osvars, \
-                                         preauthurl, preauthtoken)
+                                         preauthurl, preauthtoken, insecure)
                 else:
                     api_error('del', instance, cname, objname, err, response)
                 continue
@@ -1574,6 +1574,7 @@ def execute_proc(args):
     numobj = args[6]
     test = args[7]
     stime = args[8]
+    insecure = args[9]
 
     # for PUTs, last will already be correct but we're also passed the correct
     # numbers anyways. but for other operations last is still pointing to the
@@ -1596,7 +1597,7 @@ def execute_proc(args):
     if debug & 64:
         print("*** Actual Connect %s" % ("using preauthurl/preauthtokens" if not s3 else ''))
     connection = connect(authurl, username, password, osvars, \
-                             preauthurl, preauthtoken)
+                             preauthurl, preauthtoken, insecure)
 
     # connection complete so increment global counter while locked even
     # if connect() fails otherwise we'll hang waiting for updated value
@@ -2406,7 +2407,7 @@ if __name__ == "__main__":
                                         error('Error: put_container exc: %s' % err)
 
                         inputs.append([inst, preauthurl, preauthtoken, cname, \
-                                           csize, oname, numobj, test, stime])
+                                           csize, oname, numobj, test, stime, options.insecure])
 
                     poolOutputs = pool.map(execute_proc, inputs)
                     pool.close()
