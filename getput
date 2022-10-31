@@ -710,21 +710,20 @@ def connect(authurl, username, password, osvars, \
         s3_secret_key = password    
         s3_host, s3_port = authurl.split(':')
         s3_port = int(s3_port)
-
-        s3_insecure=True
-        if insecure:
-            s3_insecure=False
+        s3_secure=True
+        if insecure == False:
+            s3_secure=False
 
         if debug & 64:
-            print("Connect - Access: %s Secret: %s Host: %s Port: %s" % \
-                (s3_access_key, s3_secret_key, s3_host, s3_port))
+            print("Connect - Access: %s Secret: %s Host: %s Port: %s SSL: %s" % \
+                (s3_access_key, s3_secret_key, s3_host, s3_port, s3_secure))
 
         try:
             connection = boto.connect_s3(
             aws_access_key_id = s3_access_key,
             aws_secret_access_key = s3_secret_key,
             host = s3_host,
-            is_secure = s3_insecure,
+            is_secure = s3_secure,
             calling_format = boto.s3.connection.OrdinaryCallingFormat(),
             port=s3_port,
             )
@@ -1575,6 +1574,9 @@ def execute_proc(args):
     test = args[7]
     stime = args[8]
     insecure = args[9]
+    s3_secure=True
+    if insecure:
+        s3_secure=False
 
     # for PUTs, last will already be correct but we're also passed the correct
     # numbers anyways. but for other operations last is still pointing to the
@@ -1597,7 +1599,7 @@ def execute_proc(args):
     if debug & 64:
         print("*** Actual Connect %s" % ("using preauthurl/preauthtokens" if not s3 else ''))
     connection = connect(authurl, username, password, osvars, \
-                             preauthurl, preauthtoken, insecure)
+                             preauthurl, preauthtoken, s3_secure)
 
     # connection complete so increment global counter while locked even
     # if connect() fails otherwise we'll hang waiting for updated value
@@ -2086,7 +2088,10 @@ if __name__ == "__main__":
                    print("%s=%s" % (env, os.environ.get(env)))
         print("*** Initial Connect %s" % ("- get preauthtoken/preauthurl" if not s3 else ''))
 
-    connection = connect(authurl, username, password, osvars)
+    s3_secure=True
+    if options.insecure:
+        s3_secure=False
+    connection = connect(authurl, username, password, osvars, s3_secure)
     if connection == -1:
         error('Error: ClientException connect error')
 
