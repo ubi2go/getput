@@ -93,6 +93,9 @@ def build_object():
     is 'c') based on size specified by -s
     """
 
+    if verbose:
+        print("build object to upload")
+
     global md5_digest
 
     # build a fixed size object of appropriate size with RANDOM bytes so we can
@@ -100,6 +103,9 @@ def build_object():
     # use all the same so we WILL.  join() a lot faster than +
     temp = ''
     count = 0
+
+    if verbose:
+        print(" - generate random not compressable object")
     if not options.objopts or not re.search('c', options.objopts):
         while (count < (32 * 1024)):
             num = int(random.random() * 255)
@@ -109,11 +115,15 @@ def build_object():
         temp = ' ' * 32 * 1024
 
     # replicate it exponentially for speed
+    if verbose:
+        print(" - replicate it for speed")
     fixed_object = temp
     while (len(fixed_object) < osize):
         fixed_object = ''.join([fixed_object, fixed_object])
 
     # trim it down if necessary
+    if verbose:
+        print(" - trim it down if necessary")
     fixed_object = fixed_object[:osize]
 
     # m = md5.new()
@@ -123,6 +133,8 @@ def build_object():
     if debug & 1024:
         print("Obj MD5:", md5_digest)
 
+    if verbose:
+        print("build object done")
     return(fixed_object)
 
 
@@ -293,7 +305,7 @@ def main(argv):
     read/parse switches
     """
 
-    global debug, options, procset, sizeset, ldist10, s3
+    global verbose, debug, options, procset, sizeset, ldist10, s3
     global username, password, authurl, osvars, errmax
     global latexc_min, latexc_max, latexc_filt, exclog, excopt, \
                  sha_size, obj_max_proc, put_test, put_test_first
@@ -322,6 +334,9 @@ def main(argv):
                       help='tests to run [gpd]')
     group0.add_option('-h', '--help', dest='help',
                       help='show this help message and exit',
+                      action='store_true')
+    group0.add_option('--verbose', dest='verbose',
+                      help='verbose output',
                       action='store_true')
     group0.add_option('-v', '--version',  dest='version',
                       help='print version and exit',
@@ -434,6 +449,10 @@ def main(argv):
         print('getput V%s\n\n%s' % (version, copyright))
         sys.exit()
 
+    verbose = False
+    if options.verbose:
+        print('verbose output active')
+        verbose = options.verbose
     s3 = options.s3
     insecure = options.insecure
     if s3:
@@ -468,7 +487,12 @@ def main(argv):
         # big time hack to make easier to constently call connect()
         username = rgw_access_id
         password = rgw_secret_key
-        authurl = rgw_host + ':' + rgw_port
+        authurl = rgw_host + '!' + rgw_port
+
+        if verbose:
+            print("endpoint: %s" %  authurl)
+            print("access_id: %s" %  rgw_access_id)
+
         osvars = {}
 
     try:
@@ -706,9 +730,12 @@ def connect(authurl, username, password, osvars, \
     """
 
     if s3:
+        if verbose:
+            print("S3 endpoint: connecting ... ", end ='')
+
         s3_access_key = username
         s3_secret_key = password    
-        s3_host, s3_port = authurl.split(':')
+        s3_host, s3_port = authurl.split('!')
         s3_port = int(s3_port)
         s3_secure=True
         if insecure == False:
@@ -732,6 +759,9 @@ def connect(authurl, username, password, osvars, \
             print("Connect failure: %s" % err)
             logexec('connect() exception: %s %s' % (err, traceback.format_exc()))
             return(-1)
+
+        if verbose:
+            print(" connected ")
 
         if debug & 64:
             print("Connected to S3", connection)
@@ -1503,6 +1533,8 @@ def delcont(connection, cname):
     delete specified container, noting this is a cleanup function
     and NOT a test
     """
+    if verbose:
+        print("cleanup ...", end="")
 
     if not s3:
         try:
@@ -1525,6 +1557,9 @@ def delcont(connection, cname):
                 print("bucket %s is not empty and so couldn't delete" % cname)
             else:
                 print('error %d deleting bucket %s' % (err.http_status, cname))
+
+    if verbose:
+        print("done")
 
 
 def ptime(secs):
@@ -2106,7 +2141,7 @@ if __name__ == "__main__":
 
 
     preauthurl = reset_url(preauthurl)
-
+    
     # only if explicitly overriding
     if options.preauthtoken:
         preauthtoken = options.preauthtoken
@@ -2169,10 +2204,14 @@ if __name__ == "__main__":
     last_size = 0
     first_test = 1
     header_printed = 0
+
     for rep in range(repeats):
 
         for procnum in range(len(procset)):
             procs = procset[procnum]
+
+            if verbose:
+                print('Running tests for %d procs' % procs)
 
             logexec('Running tests for %d procs' % procs)
 
