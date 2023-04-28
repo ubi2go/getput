@@ -12,7 +12,7 @@ This is the getput benchmarking tool suite for SWIFT and S3 object storage.
 
 ### Linux
 ```console
-git clone https://github.com/markseger/getput.git
+git clone https://github.com/ubi2go/getput.git
 cd getput
 sudo python3 setup.py install
 ```
